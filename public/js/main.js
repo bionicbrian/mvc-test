@@ -199,7 +199,7 @@ function appendToFrag(el) {
 
 var Presenter = {
     init: function () {
-        this.model = Dog.init({ name: "Fido" });
+        this.model = Dog.init({ name: "Brian" });
         return this;
     },
     template: function () {
@@ -251,7 +251,7 @@ var Presenter = {
     }
 };
 
-// Presenter.init().show();
+Presenter.init().show();
 
 
 
