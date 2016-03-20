@@ -164,16 +164,26 @@ function append(parent, child) {
     var newChild = parent.children[parent.children.length - 1];
     return newChild;
 }
-function element(type, attrs, child) {
+function element(type, attrs) {
     var el = createElement(type);
     Object.keys(attrs).reduce(function (el, a) {
         el.setAttribute(a, attrs[a]);
+        return el;
     }, el);
-    if (child) append(el, child);
+
+    var children = Array.prototype.slice.call(arguments, 2);
+    if (children) {
+        children.forEach(function (child) {
+            append(el, child);
+        });
+    }
+
     return el;
 }
 var div = element.bind(null, "div");
 var span = element.bind(null, "span");
+var input = element.bind(null, "input");
+var form = element.bind(null, "form");
 
 function appendToFrag(el) {
     var f = frag();
@@ -185,7 +195,10 @@ var Presenter = {
     model: Dog.init({ name: "Fido" }),
     template: function () {
         var t = div({ "class": "hello" },
-                 span({}, text(this.model.name)));
+                    span({}, text(this.model.name)),
+                    form({ "class": "my-form" },
+                         input({ "class": "name", "placeholder": "New name?" }))
+                 );
         return appendToFrag(t);
     },
     _appendElementToDOM: function () {
@@ -209,22 +222,22 @@ var Presenter = {
         }
     },
     _addDOMListener(element, event, handler) {
-        element.addEventListener("click", handler);
+        element.addEventListener(event, handler);
         return function () {
-            element.removeEventListener("click", handler);
+            element.removeEventListener(event, handler);
         };
     },
-    changeName: function (name) {
+    changeName: function (ev) {
+        ev.preventDefault();
+        var name = ev.target.querySelector(".name").value;
         this.model.set("name", name);
-    },
-    _logHello() {
-        console.log(this.model.sayHello());
-        this.model.set("name", "Ricardo");
     },
     _listen: function () {
         this._unsubs = [
             this.model.subscribe("change", this.show.bind(this)),
-            this._addDOMListener(this.element, "click", this._logHello.bind(this))
+            this._addDOMListener(this.element.querySelector(".my-form"),
+                                 "submit",
+                                 this.changeName.bind(this))
         ];
     }
 };
