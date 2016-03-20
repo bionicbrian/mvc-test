@@ -1,9 +1,7 @@
 (function () {
 
-function assign(target, sources) {
-    if (!(sources instanceof Array)) {
-        sources = [sources];
-    }
+function assign(target) {
+    var sources = Array.prototype.slice.call(arguments, 1);
     sources.forEach(function (source) {
         if (typeof source === "object") {
             Object.keys(source).reduce(function (o, k) {
@@ -57,7 +55,6 @@ function assign(target, sources) {
 // };
 
 var Events = {
-    _eventHandlers: {},
     publish: function (eventName, payload) {
         var handlers = this._eventHandlers[eventName];
         if (!handlers || !handlers.forEach) {
@@ -78,6 +75,9 @@ var Events = {
         return function () {
             handlers.splice(idx, 1);
         };
+    },
+    initEvents: function () {
+        this._eventHandlers = {};
     }
 };
 
@@ -87,7 +87,7 @@ var Model = {
     prototype: {
         init: function (spec) {
             assign(this, spec);
-            assign(this, Events);
+            this.initEvents();
         },
         set: function (key, val) {
             this[key] = val;
@@ -98,13 +98,15 @@ var Model = {
         var o = Object.create(this);
         o.prototype = Object.create(this.prototype);
 
-        assign(o.prototype, spec);
+        assign(o.prototype, spec, Events);
 
         return o;
     },
     init: function (spec) {
         var o = Object.create(this.prototype);
+
         o.init(spec);
+
         return o;
     }
 };
@@ -136,6 +138,9 @@ var Chihuahua = SmallDog.createClass({
 var fido = Dog.init({ name: "Fido" });
 console.log(fido.sayHello());
 
+var ruff = Dog.init({ name: "Ruff" });
+console.log(ruff.sayHello());
+
 var fifi = SmallDog.init({ name: "Fifi" });
 console.log(fifi.sayHello());
 
@@ -147,6 +152,7 @@ pablo.subscribe("change", function (model) {
 });
 
 pablo.set("name", "Juanito");
+fifi.set("name", "FooFoo");
 
 // VIEW STUFF =================================
 
@@ -192,7 +198,10 @@ function appendToFrag(el) {
 }
 
 var Presenter = {
-    model: Dog.init({ name: "Fido" }),
+    init: function () {
+        this.model = Dog.init({ name: "Fido" });
+        return this;
+    },
     template: function () {
         var t = div({ "class": "hello" },
                     span({}, text(this.model.name)),
@@ -221,7 +230,7 @@ var Presenter = {
             });
         }
     },
-    _addDOMListener(element, event, handler) {
+    _addDOMListener: function (element, event, handler) {
         element.addEventListener(event, handler);
         return function () {
             element.removeEventListener(event, handler);
@@ -242,7 +251,7 @@ var Presenter = {
     }
 };
 
-Presenter.show();
+// Presenter.init().show();
 
 
 
